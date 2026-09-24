@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Apex Commerce · AI Voice Customer Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=ecom-1" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Top Navigation Bar -->
+      <header class="navbar">
+        <div class="brand-group">
+          <div class="brand-logo">
+            <span class="logo-icon">▲</span>
+          </div>
+          <div>
+            <div class="brand-title">
+              <h1>Apex Commerce</h1>
+              <span class="brand-badge">AI Live Support</span>
+            </div>
+            <p id="systemModelLabel" class="brand-sub">Powered by Gemini 3.8 Live</p>
+          </div>
+        </div>
+
+        <div class="nav-center">
+          <div class="customer-picker-wrap">
+            <label for="customerSelect" class="picker-label">Active Customer:</label>
+            <select id="customerSelect" class="customer-dropdown" aria-label="Select demo customer">
+              <!-- Populated dynamically via JS -->
+            </select>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <span id="callStatusPill" class="status-pill neutral">
+            <span class="pulse-dot"></span>
+            <span id="callStatusText">Ready</span>
+          </span>
+          <button id="openTicketBtn" class="btn btn-secondary" type="button">
+            <span class="icon">📋</span> CRM Ticket
+          </button>
+        </div>
+      </header>
+
+      <!-- Main 3-Column Layout -->
+      <main class="dashboard-grid">
+        <!-- COLUMN 1: Live Voice & Conversation Desk -->
+        <section class="col-voice">
+          <div class="card card-voice">
+            <div class="card-header">
+              <div class="header-left">
+                <span class="section-tag">VOICE & VISION</span>
+                <h2>Live Support Session</h2>
+              </div>
+              <div id="waveform" class="waveform-anim" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+
+            <!-- Call Controls -->
+            <div class="voice-controls">
+              <button id="micBtn" class="btn-voice mic-btn" type="button" aria-label="Start voice call">
+                <div class="mic-glow"></div>
+                <div class="mic-icon-circle">
+                  <svg class="mic-svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                  </svg>
+                </div>
+                <span class="btn-voice-label" id="micBtnLabel">Talk to Assistant</span>
+              </button>
+
+              <button id="cameraBtn" class="btn-tool camera-btn" type="button" aria-label="Show damaged item on camera">
+                <span class="tool-icon">📷</span>
+                <span class="tool-text">Show Camera</span>
+              </button>
+
+              <button id="resetSessionBtn" class="btn-tool subtle-btn" type="button" aria-label="Start new session">
+                <span class="tool-icon">🔄</span>
+                <span class="tool-text">Reset Session</span>
+              </button>
+            </div>
+
+            <!-- Camera Video Feed Stage -->
+            <div id="cameraStage" class="camera-stage" hidden>
+              <div class="camera-overlay-tag">
+                <span class="rec-indicator"></span> Visual Product Inspection Active
+              </div>
+              <video id="cameraVideo" autoplay muted playsinline></video>
+              <div class="camera-reticle"></div>
+              <p class="camera-hint">Hold up the damaged item or packaging to the camera</p>
+            </div>
+
+            <!-- Live Dialogue Transcript -->
+            <div class="transcript-container">
+              <div class="transcript-header">
+                <span>Conversation Transcript</span>
+                <span class="transcript-counter" id="turnCounter">0 turns</span>
+              </div>
+              <div id="transcriptFeed" class="transcript-feed" aria-live="polite">
+                <div class="turn system-turn">
+                  <span class="turn-badge">SYSTEM</span>
+                  <p>Welcome to Apex Commerce Support! Tap <strong>Talk to Assistant</strong> or click a demo scenario below to begin.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Text Input Fallback -->
+            <form id="chatForm" class="chat-input-form">
+              <input
+                id="chatInput"
+                type="text"
+                placeholder="Or type a question (e.g. 'Where is my order?')"
+                autocomplete="off"
+                aria-label="Type message"
+              />
+              <button type="submit" class="btn-send" aria-label="Send text">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            </form>
+
+            <!-- Quick Demo Prompts Drawer -->
+            <div class="demo-scenarios-section">
+              <div class="scenarios-title">
+                <span>⚡ Click-to-Test Demo Scenarios:</span>
+              </div>
+              <div class="scenarios-scroll" id="demoScenariosList">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- COLUMN 2: Active Order Tracking & Visual Evidence -->
+        <section class="col-order">
+          <!-- Customer Profile Strip -->
+          <div class="card customer-summary-card">
+            <div class="customer-avatar" id="customerAvatar">SJ</div>
+            <div class="customer-info">
+              <div class="customer-top-row">
+                <h3 id="customerName">Sarah Jenkins</h3>
+                <span id="customerLoyalty" class="tier-pill tier-gold">Gold VIP</span>
+              </div>
+              <p class="customer-meta">
+                <span id="customerEmail">sarah.jenkins@example.com</span> •
+                <span id="customerPhone">415-555-0142</span>
+              </p>
+              <p class="customer-address">
+                <span class="pin-icon">📍</span> <span id="customerAddress">742 Evergreen Terrace, Apt 4B, San Francisco, CA 94107</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Order Selector & Hero Card -->
+          <div class="card order-hero-card">
+            <div class="order-header-row">
+              <div class="order-id-group">
+                <span class="label-caption">ORDER NUMBER</span>
+                <select id="orderSelect" class="order-dropdown" aria-label="Select order for active customer">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div class="order-status-group">
+                <span class="label-caption">CURRENT STATUS</span>
+                <span id="orderStatusBadge" class="badge-status status-delivered">DELIVERED</span>
+              </div>
+            </div>
+
+            <!-- Interactive Milestone Stepper -->
+            <div class="milestone-stepper-container">
+              <div class="stepper-track">
+                <div class="stepper-progress-fill" id="stepperProgressFill"></div>
+              </div>
+              <div class="stepper-steps" id="stepperSteps">
+                <!-- Dynamically updated milestone nodes -->
+              </div>
+            </div>
+
+            <!-- Carrier & Delivery Meta Strip -->
+            <div class="delivery-meta-bar">
+              <div class="meta-item">
+                <span class="meta-icon">🚚</span>
+                <div>
+                  <span class="meta-lbl">Carrier & Tracking</span>
+                  <strong id="carrierTrackingLabel">FedEx · FDX-994821034</strong>
+                </div>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">⏱️</span>
+                <div>
+                  <span class="meta-lbl">Estimated Delivery</span>
+                  <strong id="etaLabel">Sep 17 at 11:42 AM</strong>
+                </div>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">💳</span>
+                <div>
+                  <span class="meta-lbl">Total & Payment</span>
+                  <strong id="orderTotalLabel">$299.99 (Visa ...4242)</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order Items List -->
+            <div class="order-items-wrapper">
+              <h4 class="items-title">Items in this Order</h4>
+              <div id="orderItemsList" class="items-list">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+
+            <!-- Dynamic Resolution Action Banner -->
+            <div id="activeResolutionBanner" class="resolution-banner" hidden>
+              <span class="res-icon">⚡</span>
+              <div class="res-content">
+                <strong id="resTitle">Action Processed</strong>
+                <p id="resDesc">Details will appear here when an action is executed.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Damage Inspection Evidence Board -->
+          <div class="card evidence-board-card">
+            <div class="card-header">
+              <div class="header-left">
+                <span class="section-tag">AI VISION INSPECTOR</span>
+                <h3>Evidence & Damage Pinboard</h3>
+              </div>
+              <span class="badge-count" id="evidenceCount">0 Photos</span>
+            </div>
+            <div id="evidenceGrid" class="evidence-grid">
+              <div class="evidence-empty">
+                <span class="empty-icon">📷</span>
+                <p>No damage photos pinned yet. When customer shows a damaged package or broken item on camera, the AI agent will inspect it, capture evidence, and pin it here.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- COLUMN 3: Policy Engine & Agent Team Stream -->
+        <section class="col-team">
+          <!-- Policy & Eligibility Gates -->
+          <div class="card policy-card">
+            <div class="card-header">
+              <div class="header-left">
+                <span class="section-tag">BUSINESS RULES</span>
+                <h3>Policy Eligibility</h3>
+              </div>
+              <span id="eligibilityPill" class="badge-pill pass">ELIGIBLE</span>
+            </div>
+
+            <div class="policy-metrics">
+              <div class="metric-box">
+                <span class="metric-lbl">Return Window</span>
+                <strong id="returnWindowMetric" class="metric-val text-success">27 Days Left</strong>
+                <span class="metric-sub">30-day standard policy</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Cancellation</span>
+                <strong id="cancellationMetric" class="metric-val text-muted">Closed</strong>
+                <span class="metric-sub">Processing state only</span>
+              </div>
+            </div>
+
+            <ul id="policyMessagesList" class="policy-messages-list">
+              <!-- Dynamically populated messages -->
+            </ul>
+          </div>
+
+          <!-- Background Agent Team Activity Feed -->
+          <div class="card team-card">
+            <div class="card-header">
+              <div class="header-left">
+                <span class="section-tag">ORCHESTRATION</span>
+                <h3>Agent Activity Feed</h3>
+              </div>
+              <span class="subtle-badge">NON-BLOCKING</span>
+            </div>
+            <p class="team-hint">Autonomous tools running in the background as the agent talks:</p>
+            <ul id="teamActivityFeed" class="team-feed">
+              <li class="empty-feed">Background tool executions (CRM lookup, carrier tracking, camera pins, order mutations) will stream in real time.</li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- CRM Ticket Handoff Modal Dialog -->
+    <dialog id="ticketModal" class="ticket-dialog">
+      <div class="dialog-content">
+        <div class="dialog-header">
+          <div class="dialog-title-group">
+            <span class="dialog-kicker">CRM & SERVICE DESK HANDOFF</span>
+            <h2 id="ticketModalTitle">Support Resolution Ticket</h2>
+          </div>
+          <div class="dialog-header-actions">
+            <button id="copyTicketBtn" class="btn btn-secondary" type="button">Copy Markdown</button>
+            <button id="closeTicketBtn" class="btn btn-close" type="button" aria-label="Close dialog">✕</button>
+          </div>
+        </div>
+        <div class="dialog-body">
+          <pre id="ticketMarkdownView" class="markdown-preview"></pre>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Hidden Offscreen Canvas for Video Frame Capture -->
+    <canvas id="captureCanvas" width="512" height="512" hidden></canvas>
+
+    <!-- Application Script -->
+    <script src="./app.js?v=ecom-1"></script>
+  </body>
+</html>
